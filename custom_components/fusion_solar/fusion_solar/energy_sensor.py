@@ -61,17 +61,10 @@ class FusionSolarEnergySensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.error(f'{self.entity_id}: not available, no check for decrease. {random.random()}')
                     current_value = None
                 if current_value is not None and new_value is not None:
-                    if new_value < current_value:
+                    if new_value < current_value or not self.is_producing_at_the_moment():
                         _LOGGER.error(
-                            f'{self.entity_id}: New value ({new_value}) is lower than current value ({current_value}). '
+                            f'{self.entity_id}: New value ({new_value}) is lower than current value ({current_value}) or not producing {self.is_producing_at_the_moment()}. '
                             f'Keeping current value to prevent decrease.'
-                        )
-                        # Return the current value if the new value
-                        return current_value
-                    elif not self.is_producing_at_the_moment():
-                        _LOGGER.error(
-                            f'{self.entity_id}: New value ({new_value}). Current value ({current_value}). '
-                            f'Keeping current value because not producing.'
                         )
                         # Return the current value if the new value
                         return current_value
