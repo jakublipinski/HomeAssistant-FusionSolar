@@ -44,29 +44,45 @@ class FusionSolarEnergySensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> float:
+        import random
+        _LOGGER.error(f'FUSION native value {random.random()}')
         # It seems like Huawei Fusion Solar returns some invalid data for the cumulativeEnergy just before midnight.
         # So we update the value only if it's increasing
         if self._attribute in [ATTR_STATION_REAL_KPI_TOTAL_LIFETIME_ENERGY, ATTR_TOTAL_LIFETIME_ENERGY]:
             # Grab the current data
             entity = self.hass.states.get(self.entity_id)
+            _LOGGER.error(f'FUSION entity: {entity} {random.random()}')  
             if entity is not None:
                 new_value = self.get_float_value_from_coordinator(self._attribute)
+                _LOGGER.error(f'FUSION try new value1: {new_value} {random.random()}')  
                 try:
                     current_value = float(entity.state)
                 except ValueError:
-                    _LOGGER.info(f'{self.entity_id}: not available, so no update to prevent issues.')
-                    return
+                    _LOGGER.error(f'{self.entity_id}: not available, no check for decrease. {random.random()}')
+                    current_value = None
                 if current_value is not None and new_value is not None:
                     if new_value < current_value:
                         _LOGGER.error(
                             f'{self.entity_id}: New value ({new_value}) is lower than current value ({current_value}). '
                             f'Keeping current value to prevent decrease.'
                         )
-                        # Return the current value if the new value is lower
+                        # Return the current value if the new value
                         return current_value
+                    elif not self.is_producing_at_the_moment():
+                        _LOGGER.error(
+                            f'{self.entity_id}: New value ({new_value}). Current value ({current_value}). '
+                            f'Keeping current value because not producing.'
+                        )
+                        # Return the current value if the new value
+                        return current_value
+                        
         try:
-            return self.get_float_value_from_coordinator(self._attribute)
+            new_value = self.get_float_value_from_coordinator(self._attribute)
+            _LOGGER.error(f'FUSION try new value: {new_value} {random.random()}')  
+            return new_value
         except FusionSolarEnergySensorException as e:
+            import random
+            _LOGGER.error(f'FUSION exception {random.random()}')
             _LOGGER.error(e)
             return None
 
