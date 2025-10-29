@@ -1,6 +1,8 @@
 import logging
 import math
+from datetime import timedelta, time
 
+from homeassistant.util import dt as dt_util
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
@@ -61,9 +63,12 @@ class FusionSolarEnergySensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.error(f'{self.entity_id}: not available, no check for decrease. {random.random()}')
                     current_value = None
                 if current_value is not None and new_value is not None:
-                    if new_value < current_value or not self.is_producing_at_the_moment():
+                    current_time = dt_util.now().time()
+                    start_quiet = time(22, 0)
+                    end_quiet = time(3, 0)
+                    if new_value < current_value or start_quiet <= current_time or current_time < end_quiet:
                         _LOGGER.error(
-                            f'{self.entity_id}: New value ({new_value}) is lower than current value ({current_value}) or not producing {self.is_producing_at_the_moment()}. '
+                            f'{self.entity_id}: New value ({new_value}) is lower than current value ({current_value}) or in quite time. '
                             f'Keeping current value to prevent decrease.'
                         )
                         # Return the current value if the new value
